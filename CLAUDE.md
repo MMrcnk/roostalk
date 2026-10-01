@@ -9,6 +9,7 @@ do arkusza Google (Apps Script web app, żądanie GET – jak MacroDroid).
 - Tekst: „pamiętaj o wyrażeniu zgody w ustawieniach na dostęp do rejestru połączeń!”
 - Pole „wklej link” (pełny URL lub samo ID wdrożenia AKfycb…) + niebieskie koło z 3 kropkami → popup SIM1/SIM2
 - Przełącznik: szary „WŁĄCZ” po lewej → zielony „WŁĄCZONE” przesunięty w prawo
+- Wyłączenie: popup (jasnoniebieski) „Żeby wyłączyć wpisz „WYLACZAM””, pole tekstowe, czerwony przycisk „WYŁĄCZ” – bez poprawnego wpisu nie wyłącza
 - Mały numer wersji na dole (klik = sprawdź aktualizację)
 
 ## Jak działa

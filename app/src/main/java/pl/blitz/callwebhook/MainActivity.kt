@@ -40,6 +40,9 @@ class MainActivity : Activity() {
     private val GREY_BG = 0xFFE2E2E2.toInt()
     private val GREY_BORDER = 0xFFA0A0A0.toInt()
     private val GREY_TEXT = 0xFF707070.toInt()
+    private val RED_BG = 0xFFCB8B88.toInt()
+    private val RED_BORDER = 0xFFD03C35.toInt()
+    private val RED_TEXT = 0xFF7A2E2B.toInt()
 
     private val required = arrayOf(Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_CALL_LOG)
     private val toRequest get() = required +
@@ -124,7 +127,7 @@ class MainActivity : Activity() {
         root.addView(space(70))
 
         toggle = Toggle()
-        toggle.onToggle = { on -> if (on) tryEnable() else setEnabled(false) }
+        toggle.onToggle = { on -> if (on) tryEnable() else confirmDisable() }
         root.addView(toggle, LinearLayout.LayoutParams(dp(220), dp(56)))
 
         root.addView(View(this), LinearLayout.LayoutParams(1, 0, 1f))
@@ -263,6 +266,63 @@ class MainActivity : Activity() {
         if (slot < 0) { simLabel.text = ""; return }
         val carrier = Sims.list(this).firstOrNull { it.slot == slot }?.carrier.orEmpty()
         simLabel.text = "SIM${slot + 1}" + if (carrier.isNotBlank()) "\n$carrier" else ""
+    }
+
+    // ---------- popup potwierdzenia wyłączenia ----------
+
+    /** Wyłączenie wymaga wpisania „WYLACZAM” – chroni przed przypadkowym wyłączeniem. */
+    private fun confirmDisable() {
+        val d = Dialog(this)
+        d.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_HORIZONTAL
+            background = box(POPUP, BORDER, 3, 6)
+            setPadding(dp(22), dp(18), dp(22), dp(18))
+        }
+        box.addView(TextView(this).apply {
+            text = "Żeby wyłączyć wpisz „WYLACZAM”"
+            typeface = fReg; textSize = 19f; setTextColor(TEXT); gravity = Gravity.CENTER
+        })
+        val input = EditText(this).apply {
+            typeface = fReg; textSize = 18f; setTextColor(TEXT); gravity = Gravity.CENTER
+            background = box(0xFFFCFCFC.toInt(), BORDER, 2, 4)
+            setPadding(dp(12), dp(8), dp(12), dp(8))
+            setSingleLine()
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS or
+                InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+        }
+        box.addView(input, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(50)).apply {
+            topMargin = dp(16); leftMargin = dp(12); rightMargin = dp(12)
+        })
+        box.addView(TextView(this).apply {
+            text = "WYŁĄCZ"
+            typeface = fBold; textSize = 22f; setTextColor(RED_TEXT); gravity = Gravity.CENTER
+            background = box(RED_BG, RED_BORDER, 3, 4)
+            setPadding(dp(20), dp(10), dp(20), dp(10))
+            isClickable = true
+            setOnClickListener {
+                val t = input.text.toString().trim().uppercase()
+                if (t == "WYLACZAM" || t == "WYŁĄCZAM") {
+                    this@MainActivity.setEnabled(false)
+                    d.dismiss()
+                } else {
+                    toast("Wpisz WYLACZAM")
+                    input.animate().translationX(dp(10).toFloat()).setDuration(60).withEndAction {
+                        input.animate().translationX(-dp(10).toFloat()).setDuration(60).withEndAction {
+                            input.animate().translationX(0f).setDuration(60).start()
+                        }.start()
+                    }.start()
+                }
+            }
+        }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+            topMargin = dp(18)
+        })
+        d.setContentView(box)
+        d.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        d.window?.setLayout((resources.displayMetrics.widthPixels * 0.88).toInt(),
+            android.view.WindowManager.LayoutParams.WRAP_CONTENT)
+        d.show()
     }
 
     // ---------- popup wyboru SIM ----------
