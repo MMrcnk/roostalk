@@ -42,6 +42,10 @@ object Prefs {
     fun url(c: Context): String = normalize(rawUrl(c))
     fun setUrl(c: Context, v: String) = sp(c).edit().putString("url", v).apply()
 
+    /** Link zablokowany kłódką (po pierwszym włączeniu) – zmiana tylko przez okienko „zmień”. */
+    fun urlLocked(c: Context) = sp(c).getBoolean("url_locked", false)
+    fun setUrlLocked(c: Context, v: Boolean) = sp(c).edit().putBoolean("url_locked", v).apply()
+
     /** 0 = SIM1, 1 = SIM2, -1 = nie wybrano */
     fun slot(c: Context) = sp(c).getInt("slot", -1)
     fun setSlot(c: Context, v: Int) = sp(c).edit().putInt("slot", v).apply()
