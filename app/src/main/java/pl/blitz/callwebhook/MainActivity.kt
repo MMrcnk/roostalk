@@ -282,7 +282,22 @@ class MainActivity : Activity() {
     // ---------- popup potwierdzenia wyłączenia ----------
 
     /** Wyłączenie wymaga wpisania „WYLACZAM” – chroni przed przypadkowym wyłączeniem. */
-    private fun confirmDisable() {
+    private fun confirmDisable() = confirmWord(
+        title = null,
+        message = "Żeby wyłączyć wpisz \u201EWYLACZAM\u201D",
+        words = listOf("WYLACZAM", "WYŁĄCZAM"),
+        upperCaseKeyboard = true,
+        button = "WYŁĄCZ"
+    ) { setEnabled(false) }
+
+    /**
+     * Okienko zabezpieczające: trzeba wpisać słowo i kliknąć czerwony przycisk.
+     * Wielkość liter nie ma znaczenia. Stuknięcie poza okienkiem = anuluj.
+     */
+    private fun confirmWord(
+        title: String?, message: String, words: List<String>,
+        upperCaseKeyboard: Boolean, button: String, onOk: () -> Unit
+    ) {
         val d = Dialog(this)
         d.requestWindowFeature(Window.FEATURE_NO_TITLE)
         val box = LinearLayout(this).apply {
@@ -291,34 +306,40 @@ class MainActivity : Activity() {
             background = box(POPUP, BORDER, 3, 6)
             setPadding(dp(22), dp(18), dp(22), dp(18))
         }
+        if (title != null) box.addView(TextView(this).apply {
+            text = title
+            typeface = fReg; textSize = 23f; setTextColor(TEXT); gravity = Gravity.CENTER
+            setPadding(0, 0, 0, dp(6))
+        })
         box.addView(TextView(this).apply {
-            text = "Żeby wyłączyć wpisz „WYLACZAM”"
+            text = message
             typeface = fReg; textSize = 19f; setTextColor(TEXT); gravity = Gravity.CENTER
+            setLineSpacing(0f, 1.15f)
         })
         val input = EditText(this).apply {
             typeface = fReg; textSize = 18f; setTextColor(TEXT); gravity = Gravity.CENTER
             background = box(0xFFFCFCFC.toInt(), BORDER, 2, 4)
             setPadding(dp(12), dp(8), dp(12), dp(8))
             setSingleLine()
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS or
-                InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS or
+                (if (upperCaseKeyboard) InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS else 0)
         }
         box.addView(input, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(50)).apply {
             topMargin = dp(16); leftMargin = dp(12); rightMargin = dp(12)
         })
+        val accepted = words.map { it.uppercase() }
         box.addView(TextView(this).apply {
-            text = "WYŁĄCZ"
+            text = button
             typeface = fBold; textSize = 22f; setTextColor(RED_TEXT); gravity = Gravity.CENTER
             background = box(RED_BG, RED_BORDER, 3, 4)
             setPadding(dp(20), dp(10), dp(20), dp(10))
             isClickable = true
             setOnClickListener {
-                val t = input.text.toString().trim().uppercase()
-                if (t == "WYLACZAM" || t == "WYŁĄCZAM") {
-                    this@MainActivity.setEnabled(false)
+                if (input.text.toString().trim().uppercase() in accepted) {
                     d.dismiss()
+                    onOk()
                 } else {
-                    toast("Wpisz WYLACZAM")
+                    toast("Wpisz ${words.first()}")
                     input.animate().translationX(dp(10).toFloat()).setDuration(60).withEndAction {
                         input.animate().translationX(-dp(10).toFloat()).setDuration(60).withEndAction {
                             input.animate().translationX(0f).setDuration(60).start()
@@ -354,17 +375,34 @@ class MainActivity : Activity() {
                 isChecked = Prefs.slot(this@MainActivity) == slot
                 if (Build.VERSION.SDK_INT >= 21) buttonTintList = ColorStateList.valueOf(BLUE)
                 setOnClickListener {
-                    if (Prefs.slot(this@MainActivity) != slot && Prefs.enabled(this@MainActivity))
-                        ScanWorker.resetToNow(this@MainActivity)
-                    Prefs.setSlot(this@MainActivity, slot)
-                    updateSimLabel()
+                    val current = Prefs.slot(this@MainActivity)
                     d.dismiss()
+                    when {
+                        current == slot -> Unit                    // ta sama karta – nic nie zmieniamy
+                        current < 0 -> applySlot(slot)             // pierwszy wybór – bez pytania
+                        else -> confirmWord(                       // zmiana karty – zabezpieczenie
+                            title = "Hej!",
+                            message = "Zmieniasz SIM z którego zapisujesz połączenia – " +
+                                "jeżeli chcesz zmienić wpisz \u201Ezmieniam\u201D",
+                            words = listOf("ZMIENIAM"),
+                            upperCaseKeyboard = false,
+                            button = "ZMIEŃ"
+                        ) { applySlot(slot) }
+                    }
                 }
             })
         }
         d.setContentView(box)
         d.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         d.show()
+    }
+
+    private fun applySlot(slot: Int) {
+        if (Prefs.enabled(this)) ScanWorker.resetToNow(this)
+        Prefs.setSlot(this, slot)
+        updateSimLabel()
+        MonitorService.ensureRunning(this)   // odświeża powiadomienie „Zapisuję połączenia z SIMx”
+        toast("Zapisuję połączenia z SIM${slot + 1}")
     }
 
     // ---------- widoki ----------

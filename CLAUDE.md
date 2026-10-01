@@ -10,6 +10,7 @@ do arkusza Google (Apps Script web app, żądanie GET – jak MacroDroid).
 - Pole „wklej link” (pełny URL lub samo ID wdrożenia AKfycb…) + niebieskie koło z 3 kropkami → popup SIM1/SIM2
 - Przełącznik: szary „WŁĄCZ” po lewej → zielony „WŁĄCZONE” przesunięty w prawo
 - Tło: bardzo delikatny (ok. 4% czerni) kogut z logo – res/drawable-nodpi/bg_chicken.png, ImageView pod ScrollView
+- Zmiana SIM (gdy karta już była wybrana): popup „Hej! Zmieniasz SIM… wpisz „zmieniam””, czerwony „ZMIEŃ”; pierwszy wybór bez pytania
 - Wyłączenie: popup (jasnoniebieski) „Żeby wyłączyć wpisz „WYLACZAM””, pole tekstowe, czerwony przycisk „WYŁĄCZ” – bez poprawnego wpisu nie wyłącza
 - Mały numer wersji na dole (klik = sprawdź aktualizację)
 
