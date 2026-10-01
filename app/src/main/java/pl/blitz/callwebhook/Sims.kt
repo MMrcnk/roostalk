@@ -17,15 +17,17 @@ object Sims {
 
     @SuppressLint("MissingPermission")
     @Suppress("DEPRECATION")
-    fun list(c: Context): List<Sim> = try {
-        val sm = sm(c) ?: return emptyList()
-        (sm.activeSubscriptionInfoList ?: emptyList()).map {
-            val num = try {
-                if (Build.VERSION.SDK_INT >= 33) sm.getPhoneNumber(it.subscriptionId) else it.number ?: ""
-            } catch (e: Throwable) { "" }
-            Sim(it.subscriptionId, it.simSlotIndex, (it.carrierName ?: it.displayName ?: "").toString(), num)
-        }.sortedBy { it.slot }
-    } catch (e: Throwable) { emptyList() }
+    fun list(c: Context): List<Sim> {
+        return try {
+            val sm = sm(c) ?: return emptyList()
+            (sm.activeSubscriptionInfoList ?: emptyList()).map {
+                val num = try {
+                    if (Build.VERSION.SDK_INT >= 33) sm.getPhoneNumber(it.subscriptionId) else it.number ?: ""
+                } catch (e: Throwable) { "" }
+                Sim(it.subscriptionId, it.simSlotIndex, (it.carrierName ?: it.displayName ?: "").toString(), num)
+            }.sortedBy { it.slot }
+        } catch (e: Throwable) { emptyList() }
+    }
 
     /** Mapuje PHONE_ACCOUNT_ID z rejestru połączeń na kartę SIM. */
     @SuppressLint("MissingPermission")
