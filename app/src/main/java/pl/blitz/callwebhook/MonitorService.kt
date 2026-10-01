@@ -76,7 +76,7 @@ class MonitorService : Service() {
         val slot = Prefs.slot(this)
         val b = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(this, CHANNEL)
                 else @Suppress("DEPRECATION") Notification.Builder(this).setPriority(Notification.PRIORITY_MIN)
-        return b.setSmallIcon(android.R.drawable.sym_call_incoming)
+        return b.setSmallIcon(R.drawable.ic_stat_roostalk)
             .setContentTitle("Roostalk działa")
             .setContentText(if (slot >= 0) "Zapisuję połączenia z SIM${slot + 1}" else "Zapisuję połączenia")
             .setContentIntent(pi)
