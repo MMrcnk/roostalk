@@ -1,18 +1,20 @@
-# Roostalk – instrukcja dla Claude Code
+# RooseTalk – instrukcja dla Claude Code
 
 Aplikacja Android: zapisuje numer + datę/godzinę połączeń PRZYCHODZĄCYCH z wybranej karty SIM
 do arkusza Google (Apps Script web app, żądanie GET – jak MacroDroid).
 
-## Interfejs (NIE rozbudowywać bez wyraźnej prośby)
-- Na górze: „Roostalk” (DM Sans Medium, czarny, wyśrodkowany), bez paska akcji
-- Cała aplikacja w DM Sans (app/src/main/assets/fonts)
-- Tekst: „pamiętaj o wyrażeniu zgody w ustawieniach na dostęp do rejestru połączeń!”
-- Pole „wklej link” (pełny URL lub samo ID wdrożenia AKfycb…) + niebieskie koło z 3 kropkami → popup SIM1/SIM2
-- Przełącznik: szary „WŁĄCZ” po lewej → zielony „WŁĄCZONE” przesunięty w prawo
-- Tło: bardzo delikatny (ok. 4% czerni) kogut z logo – res/drawable-nodpi/bg_chicken.png, ImageView pod ScrollView
-- Zmiana SIM (gdy karta już była wybrana): popup „Hej! Zmieniasz SIM… wpisz „zmieniam””, czerwony „ZMIEŃ”; pierwszy wybór bez pytania
-- Wyłączenie: popup (jasnoniebieski) „Żeby wyłączyć wpisz „WYLACZAM””, pole tekstowe, czerwony przycisk „WYŁĄCZ” – bez poprawnego wpisu nie wyłącza
-- Mały numer wersji na dole (klik = sprawdź aktualizację)
+## Interfejs (ciemny motyw – NIE rozbudowywać bez wyraźnej prośby)
+- Tło czarne; duży kogut z logo w kolorze #1A1A1A (res/drawable-nodpi/bg_chicken.png), lekko wysunięty w lewo
+- Tytuł „RooseTalk” – League Spartan Bold (assets/fonts/LeagueSpartan-Bold.ttf), biały, ~36sp
+- Pod nim biały tekst „pamiętaj o wyrażeniu zgody w ustawieniach na dostęp do rejestru połączeń!” (klik = ustawienia aplikacji)
+- Karta #292929 (zaokrąglona) z: polem „wklej link” (#F2F2F2, tekst #6E6E6E), polem „wybierz SIM” (to samo), przełącznikiem-pigułką
+- Przełącznik: wyłączony = tor #C8D1D9, biała gałka z lewej „włącz”; włączony = tor #2E8446, gałka z prawej „włączony”
+- Link: po pierwszym włączeniu zablokowany (szara kłódka, Prefs "url_locked"); okienko zmiany linku otwiera TYLKO klik w kłódkę (klik w tekst = podpowiedź)
+- Okienka – wszystkie tej samej szerokości (88% ekranu, maks. 360dp) (#292929, biały tekst, jasne pole, biały przycisk-pigułka z czerwoną obwódką #AE2B22, czerwony tekst):
+  - zmiana linku: „Zmieniasz link do arkusza – jeżeli jesteś tego pewien to wklej nowy i kliknij zmień” / „wklej nowy link” / „zmień”
+  - zmiana SIM (tylko gdy karta była już wybrana): „… wpisz „zmieniam”” / „zmień”
+  - wyłączenie: „Żeby wyłączyć zapisywanie numerów przez RooseTalk wpisz „wyłączam”” / „wyłącz”
+- Cała reszta tekstu: DM Sans. Mały numer wersji na dole (klik = sprawdź aktualizację)
 
 ## Jak działa
 - CallReceiver: RINGING → Sender.onRinging (zapamiętuje numer + kartę; wysyła od razu tylko gdy telefon zablokowany po restarcie, status "nieznany"); IDLE → ScanWorker
@@ -40,4 +42,4 @@ do arkusza Google (Apps Script web app, żądanie GET – jak MacroDroid).
 - BootReceiver/CallReceiver/MonitorService: directBootAware; LOCKED_BOOT_COMPLETED uruchamia usługę jeszcze przed PIN-em
 - Przed odblokowaniem: wysyłka bezpośrednia (Work.direct), bez WorkManagera i bez skanu rejestru
 - Po BOOT_COMPLETED: jeśli jest zgoda „wyświetlanie nad innymi” – Roostalk otwiera się na 1,5 s i chowa w tło
-- Nie zmieniaj kluczy w Prefs.kt ("url", "slot", "enabled", "last_call_id") – po aktualizacji ustawienia muszą zostać
+- Nie zmieniaj kluczy w Prefs.kt ("url", "slot", "enabled", "last_call_id", "url_locked") – po aktualizacji ustawienia muszą zostać
