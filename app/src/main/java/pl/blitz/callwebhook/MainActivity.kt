@@ -31,7 +31,7 @@ import android.widget.*
 import androidx.core.content.ContextCompat
 
 /**
- * Ekran RooseTalk – ciemny motyw wg makiety:
+ * Ekran RoosTalk – ciemny motyw wg makiety:
  * tytuł (League Spartan), tekst o zgodzie, karta z polem linku (kłódka po włączeniu),
  * polem wyboru SIM i przełącznikiem „włącz / włączony”. Zmiany zabezpieczone okienkami.
  */
@@ -81,7 +81,7 @@ class MainActivity : Activity() {
         }
 
         root.addView(TextView(this).apply {
-            text = "RooseTalk"
+            text = "RoosTalk"
             typeface = fTitle; textSize = 36f; setTextColor(Color.WHITE); gravity = Gravity.CENTER
             includeFontPadding = false
         }, matchWrap())
@@ -270,7 +270,7 @@ class MainActivity : Activity() {
 
     /**
      * Po włączeniu – kolejno, każde raz: bateria bez ograniczeń → autostart producenta
-     * → wyświetlanie nad innymi aplikacjami (pozwala RooseTalk otworzyć się samemu po restarcie).
+     * → wyświetlanie nad innymi aplikacjami (pozwala RoosTalk otworzyć się samemu po restarcie).
      * Wywoływane w onResume, więc po powrocie z każdego ekranu ustawień pokazuje następny.
      */
     private fun askNext() {
@@ -293,7 +293,7 @@ class MainActivity : Activity() {
             Prefs.setAskedOverlay(this)
             if (!Settings.canDrawOverlays(this)) {
                 try {
-                    toast("Włącz dla RooseTalk – aplikacja sama uruchomi się po restarcie")
+                    toast("Włącz dla RoosTalk – aplikacja sama uruchomi się po restarcie")
                     startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
                     return
                 } catch (_: Throwable) { }
@@ -323,7 +323,7 @@ class MainActivity : Activity() {
             val i = Intent().setClassName(pkg, cls)
             if (packageManager.resolveActivity(i, 0) != null) {
                 try {
-                    toast("Włącz autostart / działanie w tle dla RooseTalk")
+                    toast("Włącz autostart / działanie w tle dla RoosTalk")
                     startActivity(i); return true
                 } catch (_: Throwable) { }
             }
@@ -339,7 +339,7 @@ class MainActivity : Activity() {
 
     /** Wyłączenie wymaga wpisania „wyłączam”. */
     private fun confirmDisable() = popup(
-        message = "Żeby wyłączyć zapisywanie numerów przez RooseTalk wpisz \u201Ewyłączam\u201D",
+        message = "Żeby wyłączyć zapisywanie numerów przez RoosTalk wpisz \u201Ewyłączam\u201D",
         hint = "wpisz \u201Ewyłączam\u201D",
         button = "wyłącz",
         isLink = false
