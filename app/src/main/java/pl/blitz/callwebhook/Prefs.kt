@@ -61,13 +61,20 @@ object Prefs {
     fun lastCallId(c: Context) = sp(c).getLong("last_call_id", -1L)
     fun setLastCallId(c: Context, id: Long) { sp(c).edit().putLong("last_call_id", id).commit() }
 
-    /** Ostatni numer wysłany w trakcie dzwonienia – żeby skan rejestru go nie zdublował. */
-    fun lastRinging(c: Context): Pair<String, Long> {
-        val v = sp(c).getString("last_ringing", "|0") ?: "|0"
-        return v.substringBefore("|") to (v.substringAfter("|").toLongOrNull() ?: 0L)
+    /** Ostatnie dzwonienie: numer, czas, karta (-1 = nieznana), czy już wysłane (tryb przed odblokowaniem). */
+    data class Ringing(val number: String, val ts: Long, val slot: Int, val sent: Boolean)
+
+    fun lastRinging(c: Context): Ringing {
+        val p = (sp(c).getString("last_ringing", "") ?: "").split("|")
+        return Ringing(
+            p.getOrNull(0) ?: "",
+            p.getOrNull(1)?.toLongOrNull() ?: 0L,
+            p.getOrNull(2)?.toIntOrNull() ?: -1,
+            p.getOrNull(3) == "1"
+        )
     }
-    fun setLastRinging(c: Context, number: String, ts: Long) {
-        sp(c).edit().putString("last_ringing", "$number|$ts").commit()
+    fun setLastRinging(c: Context, r: Ringing) {
+        sp(c).edit().putString("last_ringing", "${r.number}|${r.ts}|${r.slot}|${if (r.sent) 1 else 0}").commit()
     }
 
     private val LOG_LOCK = Any()

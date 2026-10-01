@@ -15,9 +15,9 @@ do arkusza Google (Apps Script web app, żądanie GET – jak MacroDroid).
 - Mały numer wersji na dole (klik = sprawdź aktualizację)
 
 ## Jak działa
-- CallReceiver: RINGING → Sender.onRinging (wysyła od razu, jeśli telefon podał SIM); IDLE → ScanWorker
-- ScanWorker: czyta rejestr połączeń, wysyła to, czego nie wysłano przy dzwonieniu (bez duplikatów)
-- Parametry GET: caller_id, data (yyyy-MM-dd HH:mm:ss), ts (epoch ms), id (do deduplikacji)
+- CallReceiver: RINGING → Sender.onRinging (zapamiętuje numer + kartę; wysyła od razu tylko gdy telefon zablokowany po restarcie, status "nieznany"); IDLE → ScanWorker
+- ScanWorker: kilka sekund po rozłączeniu czyta rejestr połączeń i wysyła ze statusem odebrane/nieodebrane/odrzucone; kartę bierze z rejestru, a gdy jej tam nie ma – z chwili dzwonienia
+- Parametry GET: caller_id, data (yyyy-MM-dd HH:mm:ss), ts (epoch ms), status, id (do deduplikacji)
 - Kod Apps Script: Kod.gs
 
 ## Zasady

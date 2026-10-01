@@ -44,13 +44,22 @@ class ScanWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
     private fun handle(c: Context, id: Long, number: String, type: Int, date: Long, accountId: String?) {
         if (!Prefs.enabled(c)) return
         // tylko przychodzące: 1 odebrane, 3 nieodebrane, 5 odrzucone, 6 zablokowane
-        if (type != 1 && type != 3 && type != 5 && type != 6) return
+        val status = when (type) {
+            1 -> "odebrane"
+            3 -> "nieodebrane"
+            5, 6 -> "odrzucone"
+            else -> return
+        }
+        val ringing = Sender.ringingFor(c, number, date)
+        if (ringing?.sent == true) return   // już wysłane w chwili dzwonienia (telefon był zablokowany)
+
+        // karta SIM: z rejestru połączeń, a jeśli telefon jej tam nie zapisał – z chwili dzwonienia
         val subId = Sims.subIdForAccount(c, accountId)
         val slot = Sims.list(c).firstOrNull { it.subId == subId }?.slot
+            ?: ringing?.slot?.takeIf { it >= 0 }
         if (slot == null) { Prefs.log(c, "? nie rozpoznano SIM ($accountId)"); return }
         if (slot != Prefs.slot(c)) return
-        if (Sender.alreadySent(c, number, date)) return
-        Sender.send(c, number, date, "c$id")
+        Sender.send(c, number, date, status, "c$id")
     }
 
     companion object {
