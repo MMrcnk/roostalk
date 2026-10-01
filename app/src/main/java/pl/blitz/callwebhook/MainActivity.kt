@@ -138,13 +138,21 @@ class MainActivity : Activity() {
 
         try { Work.schedulePeriodic(this) } catch (_: Throwable) { }
         Updater.check(this, silent = true)
+
+        // Otwarta automatycznie po restarcie telefonu – uruchom wszystko i schowaj się w tło
+        if (intent?.getBooleanExtra(EXTRA_FROM_BOOT, false) == true) {
+            root.postDelayed({ try { moveTaskToBack(true) } catch (_: Throwable) { } }, 1500)
+        }
     }
+
+    companion object { const val EXTRA_FROM_BOOT = "from_boot" }
 
     override fun onResume() {
         super.onResume()
         if (Prefs.enabled(this) && !hasPerms()) Prefs.setEnabled(this, false)
         toggle.set(Prefs.enabled(this), animate = false)
         MonitorService.ensureRunning(this)
+        askNext()
         updateSimLabel()
     }
 
@@ -163,7 +171,7 @@ class MainActivity : Activity() {
             return
         }
         setEnabled(true)
-        askBatteryOnce()
+        askNext()
     }
 
     private fun setEnabled(on: Boolean) {
@@ -175,7 +183,7 @@ class MainActivity : Activity() {
 
     override fun onRequestPermissionsResult(rc: Int, p: Array<out String>, r: IntArray) {
         if (hasPerms()) {
-            if (pendingEnable) { pendingEnable = false; setEnabled(true); askBatteryOnce() }
+            if (pendingEnable) { pendingEnable = false; setEnabled(true); askNext() }
         } else {
             pendingEnable = false
             toast("Zezwól na dostęp do telefonu i rejestru połączeń")
@@ -183,8 +191,13 @@ class MainActivity : Activity() {
         }
     }
 
-    /** Najpierw zgoda na pracę bez oszczędzania baterii, potem (raz) ekran autostartu producenta. */
-    private fun askBatteryOnce() {
+    /**
+     * Po włączeniu – kolejno, każde raz: bateria bez ograniczeń → autostart producenta
+     * → wyświetlanie nad innymi aplikacjami (pozwala Roostalk otworzyć się samemu po restarcie).
+     * Wywoływane w onResume, więc po powrocie z każdego ekranu ustawień pokazuje następny.
+     */
+    private fun askNext() {
+        if (!Prefs.enabled(this) || !hasPerms()) return
         if (Build.VERSION.SDK_INT >= 23 && !Prefs.askedBattery(this)) {
             Prefs.setAskedBattery(this)
             val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
@@ -195,21 +208,37 @@ class MainActivity : Activity() {
                 } catch (_: Throwable) { }
             }
         }
-        askAutostartOnce()
+        if (!Prefs.askedAutostart(this)) {
+            Prefs.setAskedAutostart(this)
+            if (openAutostart()) return
+        }
+        if (Build.VERSION.SDK_INT >= 23 && !Prefs.askedOverlay(this)) {
+            Prefs.setAskedOverlay(this)
+            if (!Settings.canDrawOverlays(this)) {
+                try {
+                    toast("Włącz dla Roostalk – aplikacja sama uruchomi się po restarcie")
+                    startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
+                    return
+                } catch (_: Throwable) { }
+            }
+        }
     }
 
-    /** Xiaomi/Huawei/Oppo/Vivo itp. blokują start w tle, dopóki nie włączy się „Autostartu”. */
-    private fun askAutostartOnce() {
-        if (Prefs.askedAutostart(this)) return
-        Prefs.setAskedAutostart(this)
+    /** Xiaomi/Huawei/Oppo/Vivo/Samsung itp. – ekran autostartu / działania w tle. */
+    private fun openAutostart(): Boolean {
         val screens = listOf(
             "com.miui.securitycenter" to "com.miui.permcenter.autostart.AutoStartManagementActivity",
             "com.huawei.systemmanager" to "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity",
             "com.huawei.systemmanager" to "com.huawei.systemmanager.optimize.process.ProtectActivity",
+            "com.hihonor.systemmanager" to "com.hihonor.systemmanager.startupmgr.ui.StartupNormalAppListActivity",
             "com.coloros.safecenter" to "com.coloros.safecenter.permission.startup.StartupAppListActivity",
+            "com.coloros.safecenter" to "com.coloros.safecenter.startupapp.StartupAppListActivity",
+            "com.oplus.safecenter" to "com.oplus.safecenter.permission.startup.StartupAppListActivity",
             "com.oppo.safe" to "com.oppo.safe.permission.startup.StartupAppListActivity",
             "com.vivo.permissionmanager" to "com.vivo.permissionmanager.activity.BgStartUpManagerActivity",
             "com.iqoo.secure" to "com.iqoo.secure.ui.phoneoptimize.AddWhiteListActivity",
+            "com.samsung.android.lool" to "com.samsung.android.sm.battery.ui.BatteryActivity",
+            "com.samsung.android.sm" to "com.samsung.android.sm.battery.ui.BatteryActivity",
             "com.letv.android.letvsafe" to "com.letv.android.letvsafe.AutobootManageActivity",
             "com.asus.mobilemanager" to "com.asus.mobilemanager.entry.FunctionActivity"
         )
@@ -217,17 +246,12 @@ class MainActivity : Activity() {
             val i = Intent().setClassName(pkg, cls)
             if (packageManager.resolveActivity(i, 0) != null) {
                 try {
-                    toast("Włącz autostart dla Roostalk")
-                    startActivity(i); return
+                    toast("Włącz autostart / działanie w tle dla Roostalk")
+                    startActivity(i); return true
                 } catch (_: Throwable) { }
             }
         }
-    }
-
-    override fun onRestart() {
-        super.onRestart()
-        // po powrocie z ekranu baterii pokaż ekran autostartu (jeśli jest)
-        if (Prefs.enabled(this) && Prefs.askedBattery(this)) askAutostartOnce()
+        return false
     }
 
     private fun openAppSettings() = try {

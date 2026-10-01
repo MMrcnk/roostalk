@@ -31,3 +31,10 @@ do arkusza Google (Apps Script web app, żądanie GET – jak MacroDroid).
 - BootReceiver: restart telefonu i aktualizacja aplikacji → usługa wraca sama
 - Przy włączaniu: zgoda na brak oszczędzania baterii, potem ekran autostartu producenta (raz)
 - Tylko orientacja pionowa (screenOrientation=portrait)
+
+## Start po restarcie
+- Ustawienia (Prefs) w pamięci device-protected (API 24+) – dostępne przed pierwszym odblokowaniem; stare przenoszone automatycznie
+- BootReceiver/CallReceiver/MonitorService: directBootAware; LOCKED_BOOT_COMPLETED uruchamia usługę jeszcze przed PIN-em
+- Przed odblokowaniem: wysyłka bezpośrednia (Work.direct), bez WorkManagera i bez skanu rejestru
+- Po BOOT_COMPLETED: jeśli jest zgoda „wyświetlanie nad innymi” – Roostalk otwiera się na 1,5 s i chowa w tło
+- Nie zmieniaj kluczy w Prefs.kt ("url", "slot", "enabled", "last_call_id") – po aktualizacji ustawienia muszą zostać

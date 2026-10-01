@@ -1,12 +1,35 @@
 package pl.blitz.callwebhook
 
 import android.content.Context
+import android.content.SharedPreferences
+import android.os.Build
+import android.os.UserManager
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 object Prefs {
-    private fun sp(c: Context) = c.getSharedPreferences("cfg", Context.MODE_PRIVATE)
+    @Volatile private var migrated = false
+
+    /** Czy telefon został odblokowany od restartu (wcześniej Android blokuje zwykłą pamięć aplikacji). */
+    fun isUnlocked(c: Context): Boolean =
+        if (Build.VERSION.SDK_INT < 24) true
+        else try { (c.getSystemService(Context.USER_SERVICE) as UserManager).isUserUnlocked } catch (_: Throwable) { true }
+
+    /**
+     * Ustawienia trzymane w pamięci dostępnej od razu po restarcie (przed wpisaniem PIN-u).
+     * Przy pierwszym uruchomieniu nowej wersji przenosi stare ustawienia – link i SIM zostają.
+     */
+    private fun sp(c: Context): SharedPreferences {
+        if (Build.VERSION.SDK_INT < 24) return c.getSharedPreferences("cfg", Context.MODE_PRIVATE)
+        val app = c.applicationContext ?: c
+        val dp = app.createDeviceProtectedStorageContext()
+        if (!migrated && isUnlocked(app)) {
+            try { dp.moveSharedPreferencesFrom(app, "cfg") } catch (_: Throwable) { }
+            migrated = true
+        }
+        return dp.getSharedPreferences("cfg", Context.MODE_PRIVATE)
+    }
 
     /** Przyjmuje pełny link albo samo ID wdrożenia (AKfycb…). */
     fun normalize(input: String): String {
@@ -28,6 +51,9 @@ object Prefs {
 
     fun askedBattery(c: Context) = sp(c).getBoolean("asked_battery", false)
     fun setAskedBattery(c: Context) = sp(c).edit().putBoolean("asked_battery", true).apply()
+
+    fun askedOverlay(c: Context) = sp(c).getBoolean("asked_overlay", false)
+    fun setAskedOverlay(c: Context) = sp(c).edit().putBoolean("asked_overlay", true).apply()
 
     fun askedAutostart(c: Context) = sp(c).getBoolean("asked_autostart", false)
     fun setAskedAutostart(c: Context) = sp(c).edit().putBoolean("asked_autostart", true).apply()
