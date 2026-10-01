@@ -137,7 +137,18 @@ class MainActivity : Activity() {
             setOnClickListener { Updater.check(this@MainActivity, silent = false) }
         })
 
-        setContentView(ScrollView(this).apply { isFillViewport = true; addView(root) })
+        // Tło: bardzo delikatny kogut z logo, pod całą zawartością
+        val frame = FrameLayout(this)
+        frame.addView(ImageView(this).apply {
+            setImageResource(R.drawable.bg_chicken)
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            scaleX = 1.15f; scaleY = 1.15f
+            translationX = -dp(18).toFloat()
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        }, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+        frame.addView(ScrollView(this).apply { isFillViewport = true; addView(root) },
+            FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+        setContentView(frame)
 
         try { Work.schedulePeriodic(this) } catch (_: Throwable) { }
         Updater.check(this, silent = true)
